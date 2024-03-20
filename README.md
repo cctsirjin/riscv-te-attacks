@@ -36,6 +36,8 @@ To build you need to run `make`
 # Running the Tests
 
 Built "baremetal" binaries can directly run on targets that are specified above.
+./your_current_path/a_binary_name_above.riscv
+You may need Linux proxy kernel (pk).
 
 # References
 
