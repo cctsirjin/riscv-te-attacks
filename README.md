@@ -2,7 +2,7 @@
 
 This repository holds all the work-in-progress code used to check if RISC-V implementations are susceptible to transient execution attacks (TEAs).
 
-# Target Configurations
+# Target configurations
 
 ```
 
@@ -10,7 +10,7 @@ T-Head TH1520 SoC (quad XuanTie C910 cores) of Sipeed Lichee Pi 4A SBC
 
 ```
 
-# Implemented Attacks
+# Implemented attacks
 
 The following attacks are implemented within the repo.
 
@@ -25,7 +25,7 @@ The following attacks are implemented within the repo.
    * Spectre-SSB
    * Will not succeed on machines w/o MDP (Memory Dependence Prediction) mechanisms.
 
-# WIP / Not Completed Attacks
+# W. I. P. / Not completed attacks
 
 The following attacks are in-progress and are not working yet.
 
