@@ -1,83 +1,96 @@
 #ifndef CACHE_H
 #define CACHE_H
 
-// cache values
-// TODO: check that these parameters are right
-#define L1_SETS 64
-#define L1_SET_BITS 6 // note: this is log2Ceil(L1_SETS)
-#define L1_WAYS 8 //note: this looks like there are 8 ways
-#define L1_BLOCK_SZ_BYTES 64
-#define L1_BLOCK_BITS 6 // note: this is log2Ceil(L1_BLOCK_SZ_BYTES)
-#define L1_SZ_BYTES (L1_SETS*L1_WAYS*L1_BLOCK_SZ_BYTES)
-#define FULL_MASK 0xFFFFFFFFFFFFFFFF
-#define OFF_MASK (~(FULL_MASK << L1_BLOCK_BITS))
-#define TAG_MASK (FULL_MASK << (L1_SET_BITS + L1_BLOCK_BITS))
-#define SET_MASK (~(TAG_MASK | OFF_MASK))
+// Cache mapping for T-Head TH1520 SoC (quad Xuantie C910 cores)
+// Cache Capacity(C): "Each core contains 64KB I cache amd 64KB D Cache." Refer to https://github.com/sipeed/sipeed_wiki/blob/main/docs/hardware/en/lichee/th1520/lpi4a/1_intro.md
+#define L1_WAYS 2 // Degree of associativity N = 2. i.e. 2-way set associative. Refer to https://www.riscfive.com/2023/03/09/t-head-xuantie-c910-risc-v/
+#define L1_BLOCK_SZ_BYTES 64 // b = 64Byte. "Fixed cache line length of 64 bytes." Refer to https://www.riscfive.com/2023/03/09/t-head-xuantie-c910-risc-v/
+#define L1_BLOCK_BITS 6 // = log2(b).
+#define L1_SETS 512 // S = 512. S=B/N=C/Nb. Here C=64KB, L1_WAYS=N=2, b=64B, so we have S=64KB/(2x64B)=(1/2)K=512.
+#define L1_SET_BITS 9 // = log2(S)
+// Also search "i-cache-sets" in https://lore.kernel.org/linux-riscv/20230617161529.2092-6-jszhang@kernel.org/
+#define L1_SZ_BYTES (L1_SETS*L1_WAYS*L1_BLOCK_SZ_BYTES) // Cache Capacity C=Bb=SNb=1K*64Byte=64KB
+#define FULL_MASK 0xFFFFFFFFFFFFFFFF // The address size is 64 bits.
+/** 
+ * Sv39 virtual memory translation:
+ * Instruction fetch addresses and load and store effective addresses, which are 64 bits, 
+ * must have bits 63–39 all equal to bit 38, or else a page-fault exception will occur.
+ */
+#define OFFSET_MASK (~(FULL_MASK << L1_BLOCK_BITS)) // Offset bits are 0 to (L1_BLOCK_BITS - 1).
+// After this definition, only offset bits remain 1, and they are used to discover existence of any cache set in use.
+#define TAG_MASK (FULL_MASK << (L1_SET_BITS + L1_BLOCK_BITS)) 
+// After this definition, only tag bits remain 1, and they are used to align memory.
+#define SET_MASK (~(TAG_MASK | OFFSET_MASK))
+// After this definition, only set bits remain 1, and they are used to clear tag and offset field of input addr.
 
 /* ----------------------------------
- * |                  Cache address |
+ * | Cache fields for a mapped memory address |
+ * The LSBs (Least Significant Bits) of the address specify which set holds the data.
+ * - Block offset. 64-bit RISC-V processors do not need "byte offset" for 64-bit addresses.
+ * - The next several bits are called the "set bits" because they indicate the set to which the address maps.
+ * The remaining MSBs (Most Significant Bits) are the "tag" and indicate which of the many possible addresses is held in that set.
  * ----------------------------------
- * |       tag |      idx |  offset |
+ * | Tag (within a set) |  Set bits (index of set)  |       Block offset     |
  * ----------------------------------
- * | 63 <-> 12 | 11 <-> 6 | 5 <-> 0 |
+ * |   <--Remaining-->  |       <--log2(S) -->      |     <--log2(b) -->    |
  * ----------------------------------
  */
 
-// setup array size of cache to "put" in the cache on $ flush
-// guarantees contiguous set of addrs that is at least the sz of cache
-// 5 so that you can hit more
-uint8_t dummyMem[5 * L1_SZ_BYTES];
-
+// Set up an empty array to put into the cache during the following cache flush.
+// This aims to guarantee a contiguous set of addresses which is at least the size of cache.
+// TBD: Investigate how to determine this MULTIPLIER.
+#define MULTIPLIER 10
+// If your source codes are unable to flush the cache thoroughly, you may try increasing this MULTIPLIER.
+// But, of course, that will cause longer execution time of the final binary programs. 
+uint8_t dummyMem[MULTIPLIER * L1_SZ_BYTES];
+// Temporary variable.
+uint8_t flush_junk = 0;
 /**
- * Flush the cache of the address given since RV64 does not have a
- * clflush type of instruction. Clears any set that has the same idx bits
- * as the address input range.
- *
- * Note: This does not work if you are trying to flush dummyMem out of the
- * cache.
- *
- * @param addr starting address to clear the cache
- * @param sz size of the data to remove in bytes
+ * Flush the cache of the address given since RV64 does not have an x86 clflush type instruction.
+ * Clears any set that has the same set bits as the input address range.
+ * Note: This does not work if you are trying to flush dummyMem out of the cache.
+ * @param memAddr starting address to clear the cache
+ * @param memSize size of the data to remove in bytes
  */
-void flushCache(uint64_t addr, uint64_t sz){
-    //printf("Flushed addr(0x%x) tag(0x%x) set(0x%x) off(0x%x) sz(%d)\n", addr, (addr & TAG_MASK) >> (L1_SET_BITS + L1_BLOCK_BITS), (addr & SET_MASK) >> L1_BLOCK_BITS, addr & OFF_MASK, sz);
+void flushCache(uint64_t memAddr, uint64_t memSize){
+    //printf("Flushed memAddr(0x%x) tag(0x%x) set(0x%x) off(0x%x) memSize(%d)\n", memAddr, (memAddr & TAG_MASK) >> (L1_SET_BITS + L1_BLOCK_BITS), (memAddr & SET_MASK) >> L1_BLOCK_BITS, memAddr & OFFSET_MASK, memSize);
 
-    // find out the amount of blocks you want to clear
-    uint64_t numSetsClear = sz >> L1_BLOCK_BITS;
-    if ((sz & OFF_MASK) != 0){
+    // Find out the quantity of blocks that need to be cleared.
+    uint64_t numSetsClear = memSize >> L1_BLOCK_BITS; // This operation removes block bits and shifts set bits to the right.
+	//  Offset bits other than all 0s indicate that it is not the beginning block of a set, so additional clearing is required.
+    if ((memSize & OFFSET_MASK) != 0){
         numSetsClear += 1;
     }
+	// Flush the entire cache with no rollover, which makes this flushCache function finish faster. 
     if (numSetsClear > L1_SETS){
-        // flush entire cache with no rollover (makes the function finish faster) 
         numSetsClear = L1_SETS;
     }
     
     //printf("numSetsClear(%d)\n", numSetsClear);
 
-    // temp variable used for nothing
-    uint8_t dummy = 0;
-
-    // this mem address is the start of a contiguous set of memory that will fit inside of the
-    // cache
-    // thus it has the following properties
-    // 1. dummyMem <= alignedMem < dummyMem + sizeof(dummyMem)
-    // 2. alignedMem has idx = 0 and offset = 0 
+    // This memory address alignedMem is the start of a contiguous set of memory that will fit inside the cache.
+    // Thus it has the following properties:
+    // 1. dummyMem <= alignedMem < dummyMem + sizeof(dummyMem) (since set bits and offset are cleared)
+    // 2. alignedMem has set bits = 0 and offset = 0, only tag bits remain.
     uint64_t alignedMem = (((uint64_t)&dummyMem) + L1_SZ_BYTES) & TAG_MASK;
+	// "&" is the address-of operator. The type of the result is "pointer to the operand."
     //printf("alignedMem(0x%x)\n", alignedMem);
         
     for (uint64_t i = 0; i < numSetsClear; ++i){
-        // offset to move across the sets that you want to flush
-        uint64_t setOffset = (((addr & SET_MASK) >> L1_BLOCK_BITS) + i) << L1_BLOCK_BITS;
+        // Combined with the for loop to move across the sets that you want to flush.
+        uint64_t setOffset = (((memAddr & SET_MASK) >> L1_BLOCK_BITS) + i) << L1_BLOCK_BITS;
         //printf("setOffset(0x%x)\n", setOffset);
 
-        // since there are L1_WAYS you need to flush the entire set
-        for(uint64_t j = 0; j < 4*L1_WAYS; ++j){
+        // There are N=L1_WAYS in a set to flush. And it needs to be repeated for 5 times since we have an extended dummyMem.
+        for(uint64_t j = 0; j < ((MULTIPLIER-1)*L1_WAYS); ++j){
             // offset to reaccess the set
             uint64_t wayOffset = j << (L1_BLOCK_BITS + L1_SET_BITS);
             //printf("wayOffset(0x%x)\n", wayOffset);
 
-            // evict the previous cache block and put in the dummy mem
-            dummy = *((uint8_t*)(alignedMem + setOffset + wayOffset));
+            // The processor will fetch needed (but empty, this property is important) data into the cache  
+			// as the following expression shows, which, due to same set bits and tags, evicts previous data.
+            flush_junk = *((uint8_t*)(alignedMem + setOffset + wayOffset));
+			// * indirection or dereferencing operator accesses the object the pointer points to.
             //printf("evict read(0x%x)\n", alignedMem + setOffset + wayOffset);
         }
     }
