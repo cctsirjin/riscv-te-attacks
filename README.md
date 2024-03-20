@@ -1,63 +1,33 @@
-# BOOM Speculative Attacks
+# RISC-V Transient Execution Attacks
 
-This repository holds all the work-in-progress code used to check if BOOM is susceptible to Spectre attacks.
+This repository holds all the work-in-progress code used to check if RISC-V implementations are susceptible to transient execution attacks (TEAs).
 
-# Project Members
-
-| Name             | Github Handle |
-| ---------------- | ------------- |
-| Abraham Gonzalez | abejgonzalez  |
-| Ed Younis        | riyt          |
-| Ben Korpan       | bkorpan       |
-| Jerry Zhao       | jerry123      |
-
-# Further Details
-
-## BOOM Configuration
-
-This is working with the version of BOOM located at https://github.com/riscv-boom/riscv-boom/commit/8bb0e34feedf6d7b2465b10e0e166fec988b0396.
+# Target Configurations
 
 ```
-Processor Details:
 
-Extra Addition: Default FTQ Size
+T-Head TH1520 SoC (quad Xuantie C910 cores) of Sipeed Lichee Pi 4A SBC
 
-Fetch Width        : 2
-Decode Width       : 2
-Issue Width        : 4
-ROB Size           : 100
-
-==Dense BTB==
-Sets          : 512
-Banks         : 2
-Ways          : 4
-Branch Levels : 2
-Tag Size      : 13
-Offset Size   : 13
-
-==BIM==
-(4 Kbits = 0 kB) Bimodal Table (1024 entries across 2 banks)
-
-==GShare==
-(2 kB) GShare Predictor, with 23 bits of history for (2-wide fetch) and 4096 entries.
 ```
 
-## Implemented Attacks
+# Implemented Attacks
 
 The following attacks are implemented within the repo.
 
-* Spectre-v1 or Bounds Check Bypass [1]
-    * condBranchMispred.c
-* Spectre-v2 or Branch Target Injection [1]
-    * indirBranchMispred.c
+## Spectre-BCB (Bounds Check Bypass) or Spectre-v1 [1]
+   * Spectre-BCB.c
+## Spectre-BTI (Branch Target Injection) or Spectre-v2 [1]
+   * Spectre-BTI.c
+## Spectre-RSB (Return Stack Buffer attack) or Spectre-v5 [2]
+   * Spectre-RSB.c + stack.S
+   * May not succeed on machines w/o RAS (Return Address Stack) or something similar.
+## CVE-2018-3639: Spectre-SSB (Speculative Store Bypass) or Spectre-v4
+   * Spectre-SSB
+   * Will not succeed on machines w/o MDP (Memory Dependence Prediction) mechanisms.
 
-## Not Completed Attacks
+# WIP / Not Completed Attacks
 
 The following attacks are in-progress and are not working yet.
-
-* Return Stack Buffer Attack [2]
-    * returnStackBuffer.c
-    * Main reason why this doesn't work is because the RSB was disconnected in the BPU (commented out). 
 
 # Building the tests
 
@@ -65,7 +35,7 @@ To build you need to run `make`
 
 # Running the Tests
 
-This builds "baremetal" binaries that can directly run on the BOOM configuration that was specified above.
+Built "baremetal" binaries can directly run on targets that are specified above.
 
 # References
 
