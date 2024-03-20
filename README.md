@@ -6,7 +6,7 @@ This repository holds all the work-in-progress code used to check if RISC-V impl
 
 ```
 
-T-Head TH1520 SoC (quad Xuantie C910 cores) of Sipeed Lichee Pi 4A SBC
+T-Head TH1520 SoC (quad XuanTie C910 cores) of Sipeed Lichee Pi 4A SBC
 
 ```
 
