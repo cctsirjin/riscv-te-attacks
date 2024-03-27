@@ -1,15 +1,15 @@
 #ifndef CACHE_H
 #define CACHE_H
 
-// Cache mapping for T-Head TH1520 SoC (quad XuanTie C910 cores)
-// Cache Capacity(C): "Each core contains 64KB I cache amd 64KB D Cache." Refer to https://github.com/sipeed/sipeed_wiki/blob/main/docs/hardware/en/lichee/th1520/lpi4a/1_intro.md
-#define L1_ICACHE_WAYS 2 // Degree of associativity N = 2. i.e. 2-way set associative. Refer to https://www.riscfive.com/2023/03/09/t-head-xuantie-c910-risc-v/
-#define L1_ICACHE_BLOCK_BYTES 64 // b = 64Byte. "Fixed cache line length of 64 bytes." Refer to https://www.riscfive.com/2023/03/09/t-head-xuantie-c910-risc-v/
+// Cache mapping for SonicBOOM
+// Specification: https://github.com/riscv-boom/riscv-boom/blob/master/src/main/scala/v3/common/config-mixins.scala
+// Also refer to https://carrv.github.io/2020/papers/CARRV2020_paper_15_Zhao.pdf
+#define L1_ICACHE_WAYS 8 // 4? Degree of associativity N = 4. i.e. N-way set associative.
+#define L1_ICACHE_BLOCK_BYTES 64 // 128? b = 64Byte. "blockBytes" in https://github.com/chipsalliance/rocket-chip/blob/master/src/main/scala/rocket/ICache.scala
 #define L1_ICACHE_BLOCK_BITS 6 // = log2(b).
-#define L1_ICACHE_SETS 512 // S = 512. S=B/N=C/Nb. Here C=64KiB, L1_ICACHE_WAYS=N=2, b=64B, so we have S=64KiB/(2x64B)=(1/2)K=512.
-#define L1_ICACHE_SETS_BITS 9 // = log2(S)
-// Also search "i-cache-sets" in https://lore.kernel.org/linux-riscv/20230617161529.2092-6-jszhang@kernel.org/
-#define L1_ICACHE_CAPACITY_BYTES (L1_ICACHE_SETS*L1_ICACHE_WAYS*L1_ICACHE_BLOCK_BYTES) // Cache Capacity C=Bb=SNb=1K*64Byte=64KiB
+#define L1_ICACHE_SETS 64 // S = 64. S=B/N=C/Nb. "nSets". Here C=32KiB, L1_ICACHE_WAYS=N=8, b=64B, so we have S=32KiB/(8x64B)=(1/2)K=64.
+#define L1_ICACHE_SETS_BITS 6 // = log2(S)
+#define L1_ICACHE_CAPACITY_BYTES (L1_ICACHE_SETS*L1_ICACHE_WAYS*L1_ICACHE_BLOCK_BYTES) // Cache Capacity C=Bb=SNb=64*4*128Byte=32KiB
 #define FULL_MASK 0xFFFFFFFFFFFFFFFF // The address size is 64 bits.
 /** 
  * Sv39 virtual memory translation:
