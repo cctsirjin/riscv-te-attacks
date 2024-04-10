@@ -34,7 +34,7 @@
  * Arbitrary as long as your machine allows it
  */
 
-#define ARRAY_STRIDE L1_ICACHE_BLOCK_BYTES
+#define ARRAY_STRIDE L1_DCACHE_BLOCK_BYTES
 /* This aims to ensure size of the following arrays always >= size of a cache block, thus at least 1 cache set will be used. */
 
 /** 
