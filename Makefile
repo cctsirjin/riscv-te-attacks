@@ -102,7 +102,7 @@ $(OBJ)/%.o: $(SRC)/%.c
 	@mkdir -p $(DEP)
 	$(CC) $(CFLAGS) $(DEPFLAGS) -c $< -o $@
 
-## For Verilator	
+## For Verilator
 $(OBJRV)/%.o: $(SRCRV)/%.S
 	@mkdir -p $(OBJRV)
 	$(CCRV) $(CFLAGS) -D__ASSEMBLY__=1 -c $< -o $@
@@ -113,23 +113,23 @@ $(OBJRV)/%.o: $(SRCRV)/%.c
 	$(CCRV) $(CFLAGS) $(DEPFLAGS) -c $< -o $@
 
 # Build executable
-$(BIN)/%.riscv: $(OBJ)/%.o $(OBJ)/stack.o
+$(BIN)/%.riscv: $(OBJ)/%.o $(OBJ)/swStackGadget.o
 #$(BIN)/%.riscv: $(OBJ)/%.o
 	@mkdir -p $(BIN)
-	$(CC) $(LDFLAGS) $< $(OBJ)/stack.o -o $@
+	$(CC) $(LDFLAGS) $< $(OBJ)/swStackGadget.o -o $@
 #	$(CC) $(LDFLAGS) $< -o $@
 
-## For Verilator	
-$(BINRV)/%.riscvrv: $(OBJRV)/%.o $(OBJRV)/crt.o $(OBJRV)/syscalls.o $(OBJRV)/stack.o $(LNK)/link.ld
+## For Verilator
+$(BINRV)/%.riscvrv: $(OBJRV)/%.o $(OBJRV)/crt.o $(OBJRV)/syscalls.o $(OBJRV)/swStackGadget.o $(LNK)/link.ld
 	@mkdir -p $(BINRV)
-	$(CCRV) -T $(LNK)/link.ld $(LDFLAGSRV) $< $(OBJRV)/crt.o $(OBJRV)/stack.o $(OBJRV)/syscalls.o -o $@	
+	$(CCRV) -T $(LNK)/link.ld $(LDFLAGSRV) $< $(OBJRV)/crt.o $(OBJRV)/swStackGadget.o $(OBJRV)/syscalls.o -o $@
 
 # Build dump
 $(DMP)/%.dump: $(BIN)/%.riscv
 	@mkdir -p $(DMP)
 	$(OBJDUMP) -D $< > $@
 
-## For Verilator	
+## For Verilator
 $(DMPRV)/%.dumprv: $(BINRV)/%.riscvrv
 	@mkdir -p $(DMPRV)
 	$(OBJDUMPRV) -D $< > $@
