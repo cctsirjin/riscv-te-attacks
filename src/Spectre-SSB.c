@@ -35,8 +35,15 @@
  */
 
 #define ARRAY_STRIDE L1_DCACHE_BLOCK_BYTES
-/* This aims to ensure size of the following arrays always >= size of a cache block, thus at least 1 cache set will be used. */
-
+/**
+ * Reference from Lipp et al, 2018, Meltdown:
+ * Based on the value of data in this example, a different part of the cache is accessed when executing the memory access out of order.
+ * As data is multiplied by L1_DCACHE_BLOCK_BYTES (typically 4096), data accesses to probe array are scattered over the array
+ * with a distance of L1_DCACHE_BLOCK_BYTES Bytes (typically 4 KB, assuming an 1 B data type for probe array, e.g. uint8_t).
+ * Thus, there is an injective mapping from the value of data to a memory page, i.e., different values for data never result in an access to the same page.
+ * Consequently, if a cache line of a page is cached, we know the value of data.
+ * The spreading over pages eliminates false positives due to the prefetcher, as the prefetcher cannot access data across page boundaries.
+ */
 /** 
  * Assume the attacker knows following information in advance: 
  * - Hardware specifications
