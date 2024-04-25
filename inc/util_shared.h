@@ -1,6 +1,33 @@
 #ifndef UTIL_SHARED_H
 #define UTIL_SHARED_H
 
+/* ANSI escape color codes */
+#define ANSI_CODE_RESET      "\033[00m"
+#define ANSI_CODE_BOLD       "\033[1m"
+#define ANSI_CODE_DARK       "\033[2m"
+#define ANSI_CODE_UNDERLINE  "\033[4m"
+#define ANSI_CODE_BLINK      "\033[5m"
+#define ANSI_CODE_REVERSE    "\033[7m"
+#define ANSI_CODE_CONCEALED  "\033[8m"
+#define ANSI_CODE_GRAY       "\033[30m"
+#define ANSI_CODE_GREY       "\033[30m"
+#define ANSI_CODE_RED        "\033[31m"
+#define ANSI_CODE_GREEN      "\033[32m"
+#define ANSI_CODE_YELLOW     "\033[33m"
+#define ANSI_CODE_BLUE       "\033[34m"
+#define ANSI_CODE_MAGENTA    "\033[35m"
+#define ANSI_CODE_CYAN       "\033[36m"
+#define ANSI_CODE_WHITE      "\033[37m"
+#define ANSI_CODE_BG_GRAY    "\033[40m"
+#define ANSI_CODE_BG_GREY    "\033[40m"
+#define ANSI_CODE_BG_RED     "\033[41m"
+#define ANSI_CODE_BG_GREEN   "\033[42m"
+#define ANSI_CODE_BG_YELLOW  "\033[43m"
+#define ANSI_CODE_BG_BLUE    "\033[44m"
+#define ANSI_CODE_BG_MAGENTA "\033[45m"
+#define ANSI_CODE_BG_CYAN    "\033[46m"
+#define ANSI_CODE_BG_WHITE   "\033[47m"
+
 /**
  * Reads in inArray and corresponding size, as well as outIdxArrays top two idx's and their
  * corresponding values in the inArray, which has the highest values.
@@ -34,7 +61,7 @@ void dynamicInputString(char* defaultString, int maxStringLength, char* outputSt
 	int userStringLength;
 	
 	printf("------ Customized Settings of Target String ------\n");
-	printf("Please enter a string (in extended ASCII with a maximum of %d characters), \nor enter nothing to apply default settings. (default: %s)\n", maxStringLength, defaultString);
+	printf("Please enter a string (in extended ASCII with "ANSI_CODE_RED"a maximum of %d characters"ANSI_CODE_RESET"), \nor enter nothing to apply default settings. (default: %s)\n", maxStringLength, defaultString);
 	printf("Part of input string that exceeds the maximum length will get chopped.\n(You can manually adjust #define MAX_STRING_LENGTH_FACTOR in the source code file.)\n");
 	printf("Now provide your string: ");
 	
@@ -44,10 +71,10 @@ void dynamicInputString(char* defaultString, int maxStringLength, char* outputSt
 	userStringLength = strlen(outputString);
 	
 	if (userStringLength == 0) {
-		printf("Using default string: %s\n", defaultString);
+		printf("Using default string: "ANSI_CODE_YELLOW"%s"ANSI_CODE_RESET"\n", defaultString);
 		strcpy(outputString, defaultString);
 	} else {
-		printf("Using customized string: %s\n", outputString);
+		printf("Using customized string: "ANSI_CODE_YELLOW"%s"ANSI_CODE_RESET"\n", outputString);
 	
 	}
 
