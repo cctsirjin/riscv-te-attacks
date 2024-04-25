@@ -19,7 +19,7 @@ The following attacks are implemented within the repo.
 ## CVE-2017-5715: Spectre-BTI (Branch Target Injection) or Spectre-v2 [1]
    * Spectre-BTI.c
 ## CVE-2018-15572: Spectre-RSB (Return Stack Buffer attack) or Spectre-v5 [2]
-   * Spectre-RSB.c + stack.S
+   * Spectre-RSB.c + swStackGadget.S
    * May not succeed on machines w/o RAS (Return Address Stack) or something similar.
 ## CVE-2018-3639: Spectre-SSB (Speculative Store Bypass) or Spectre-v4
    * Spectre-SSB.c
