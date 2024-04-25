@@ -39,11 +39,12 @@
 /**
  * Reference from Lipp et al, 2018, Meltdown:
  * Based on the value of data in this example, a different part of the cache is accessed when executing the memory access out of order.
- * As data is multiplied by L1_DCACHE_BLOCK_BYTES (typically 4096), data accesses to probe array are scattered over the array
+ * As data is multiplied by L1_DCACHE_BLOCK_BYTES (found with getconf PAGE_SIZE, typically 4096), data accesses to probe array are scattered over the array
  * with a distance of L1_DCACHE_BLOCK_BYTES Bytes (typically 4 KB, assuming an 1 B data type for probe array, e.g. uint8_t).
  * Thus, there is an injective mapping from the value of data to a memory page, i.e., different values for data never result in an access to the same page.
  * Consequently, if a cache line of a page is cached, we know the value of data.
  * The spreading over pages eliminates false positives due to the prefetcher, as the prefetcher cannot access data across page boundaries.
+ * This prevents the hardware prefetcher from loading adjacent memory locations into the cache as well.
  */
 
 /** 
@@ -232,7 +233,7 @@ int main(void){
 		results[0] ^= dummy;
 		topTwoIdx(results, RESULT_ARRAY_SIZE, output, hitArray);
 		
-		printf("MA[%p] ~ SO(%lu) ~ TC(%c) <-?-- GR(%c, %d, %lu)\n", (uint8_t*)(secretString+len), len, secretString[len], output[0], output[0], hitArray[0]);
+		printf("MA[%p] ~ SO(%lu) ~ TC("ANSI_CODE_YELLOW"%c"ANSI_CODE_RESET") <-?-- GR("ANSI_CODE_CYAN"%c"ANSI_CODE_RESET", %d, %lu)\n", (uint8_t*)(secretString+len), len, secretString[len], output[0], output[0], hitArray[0]);
 		
 		guessString[len]=(char)output[0];
 
@@ -241,8 +242,8 @@ int main(void){
 	printf("------ End of Attack ------\n");
 	
 	printf("------ Summary ------\n");
-    printf("Stored: %s\n", secretString);
-	printf("Guessed: %s\n", guessString);
+    printf("Expected: "ANSI_CODE_YELLOW"%s"ANSI_CODE_RESET"\n", secretString);
+	printf("Guessed: "ANSI_CODE_CYAN"%s"ANSI_CODE_RESET"\n", guessString);
 	printf("****** That Is All for the Demonstration ******\n");
 	
 	// Free the allocated memory after use.
