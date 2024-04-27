@@ -11,14 +11,14 @@
 // Also search "i-cache-sets" in https://lore.kernel.org/linux-riscv/20230617161529.2092-6-jszhang@kernel.org/
 #define L1_DCACHE_CAPACITY_BYTES (L1_DCACHE_SETS*L1_DCACHE_WAYS*L1_DCACHE_BLOCK_BYTES) // Cache Capacity C=Bb=SNb=1K*64Byte=64KiB
 #define FULL_MASK 0xFFFFFFFFFFFFFFFF // The address size is 64 bits.
-/** 
+/**
  * Sv39 virtual memory translation:
- * Instruction fetch addresses and load and store effective addresses, which are 64 bits, 
+ * Instruction fetch addresses and load and store effective addresses, which are 64 bits,
  * must have bits 63–39 all equal to bit 38, or else a page-fault exception will occur.
  */
 #define OFFSET_MASK (~(FULL_MASK << L1_DCACHE_BLOCK_BITS)) // Offset bits are 0 to (L1_DCACHE_BLOCK_BITS - 1).
 // After this definition, only offset bits remain 1, and they are used to discover existence of any cache set in use.
-#define TAG_MASK (FULL_MASK << (L1_DCACHE_SETS_BITS + L1_DCACHE_BLOCK_BITS)) 
+#define TAG_MASK (FULL_MASK << (L1_DCACHE_SETS_BITS + L1_DCACHE_BLOCK_BITS))
 // After this definition, only tag bits remain 1, and they are used to align memory.
 #define SET_MASK (~(TAG_MASK | OFFSET_MASK))
 // After this definition, only set bits remain 1, and they are used to clear tag and offset field of input addr.
@@ -41,7 +41,7 @@
 // TBD: Investigate how to determine this MULTIPLIER.
 #define MULTIPLIER 10
 // If your source codes are unable to flush the cache thoroughly, you may try increasing this MULTIPLIER.
-// But, of course, that will cause longer execution time of the final binary programs. 
+// But, of course, that will cause longer execution time of the final binary programs.
 uint8_t dummyMem[MULTIPLIER * L1_DCACHE_CAPACITY_BYTES];
 // Temporary variable.
 uint8_t flush_junk = 0;
@@ -61,11 +61,11 @@ void flushCache(uint64_t memAddr, uint64_t memSize){
     if ((memSize & OFFSET_MASK) != 0){
         numSetsClear += 1;
     }
-	// Flush the entire cache with no rollover, which makes this flushCache function finish faster. 
+	// Flush the entire cache with no rollover, which makes this flushCache function finish faster.
     if (numSetsClear > L1_DCACHE_SETS){
         numSetsClear = L1_DCACHE_SETS;
     }
-    
+
     //printf("numSetsClear(%d)\n", numSetsClear);
 
     // This memory address alignedMem is the start of a contiguous set of memory that will fit inside the cache.
@@ -75,7 +75,7 @@ void flushCache(uint64_t memAddr, uint64_t memSize){
     uint64_t alignedMem = (((uint64_t)&dummyMem) + L1_DCACHE_CAPACITY_BYTES) & TAG_MASK;
 	// "&" is the address-of operator. The type of the result is "pointer to the operand."
     //printf("alignedMem(0x%x)\n", alignedMem);
-        
+
     for (uint64_t i = 0; i < numSetsClear; ++i){
         // Combined with the for loop to move across the sets that you want to flush.
         uint64_t setOffset = (((memAddr & SET_MASK) >> L1_DCACHE_BLOCK_BITS) + i) << L1_DCACHE_BLOCK_BITS;
@@ -87,7 +87,7 @@ void flushCache(uint64_t memAddr, uint64_t memSize){
             uint64_t wayOffset = j << (L1_DCACHE_BLOCK_BITS + L1_DCACHE_SETS_BITS);
             //printf("wayOffset(0x%x)\n", wayOffset);
 
-            // The processor will fetch needed (but empty, this property is important) data into the cache  
+            // The processor will fetch needed (but empty, this property is important) data into the cache
 			// as the following expression shows, which, due to same set bits and tags, evicts previous data.
             flush_junk = *((uint8_t*)(alignedMem + setOffset + wayOffset));
 			// * indirection or dereferencing operator accesses the object the pointer points to.
