@@ -27,7 +27,7 @@ The following attacks are implemented within the repo.
 
 # W. I. P. / Not completed attacks
 
-The following attacks are in-progress and are not working yet.
+The following attacks are in-progress and have not been prepared for use yet.
 
 # Building the tests
 
