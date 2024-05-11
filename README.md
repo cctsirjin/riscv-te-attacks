@@ -39,7 +39,7 @@ Built "baremetal" binaries can directly run on targets that are specified above.
 ```
 path/to/a_binary_name_above.riscv
 ```
-Sometimes you may need Linux proxy kernel (pk).
+Depending on implementations, you may also need Linux proxy kernel (pk).
 
 # References
 
