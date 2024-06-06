@@ -2,7 +2,7 @@
 #define CACHE_H
 
 // L1 data cache mapping for U Tokyo Shioya Lab RSD(RaiShouDou) CPU
-// L1 data Cache Capacity(C): "Each core contains 64KB I cache amd 64KB D Cache." Refer to https://github.com/rsd-devel/rsd/blob/master/Processor/Src/MicroArchConf.sv
+// Refer to https://github.com/rsd-devel/rsd/blob/master/Processor/Src/MicroArchConf.sv
 #define L1_DCACHE_WAYS 2 // Degree of associativity N = 2. i.e. 2-way set associative. In the link above: "CONF_DCACHE_WAY_NUM = 2"
 #define L1_DCACHE_BLOCK_BYTES 8 // b = 8Byte. In the link above: "CONF_DCACHE_LINE_BYTE_NUM = 8"
 #define L1_DCACHE_BLOCK_BITS 3 // = log2(b).
