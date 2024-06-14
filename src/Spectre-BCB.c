@@ -138,7 +138,7 @@ int main(void){
 	int maxStringLength = strlen(defaultString) * MAX_STRING_LENGTH_FACTOR;
     char* secretString;
 	// Allocate memory for the string. 
-	// Need to do this in main function because return 1 of subfuction will not terminate the main.
+	// Need to do this in main function because return 1 of subfunction will not terminate the main.
 	secretString = malloc(maxStringLength * sizeof(char));
 	if (secretString == NULL) {
 		printf("Error: Memory allocation failed.\n");
