@@ -55,7 +55,7 @@
  */
 
 /** 
- * Altough there are no direct accesses to secretString, after being "trained" for a certain times,
+ * Although there are no direct accesses to secretString, after being "trained" for a certain times,
  * vulnerable processors will "grow accustomed to" legitimate inputs (such as branch-not-taken) fed deliberately by the attacker, 
  * and mistakenly predict that succeeding illegitimate attempts wll also be true, fetching secretString into cache.
  * The attacker can then exploit the shortened access time (because of cache) and apply cache SCAs methods,
